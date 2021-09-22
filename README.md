@@ -1,2 +1,6 @@
-# tse-index
-Fetch Index Data of Tehran Stock Exchange for python
+<div dir="rtl">
+
+# دریافت دیتای شاخص کل و شاخص صنایع بازار بورس تهران
+
+
+</div>
