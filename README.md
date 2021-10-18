@@ -21,11 +21,11 @@ pip install tse-index
 
 </div>
 
-## نصب نسخه در حال توسعه
+## نصب آخرین نسخه در حال توسعه
 <div dir="ltr">
 
-```bash
-pip install tse-index
+``` shell
+python -m pip install git+https://github.com/alised/tse-index.git
 ```
 
 </div>
