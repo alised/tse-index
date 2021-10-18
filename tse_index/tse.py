@@ -12,7 +12,7 @@ from tse_index._utils import (
 )
 
 
-class TSEReader:
+class reader:
     """
     Tehran stock exchange daily data
 
@@ -44,30 +44,24 @@ class TSEReader:
 
     def __init__(
         self,
-        symbols=None,
-        start=None,
-        end=None,
         retry_count=3,
         pause=0.1,
         session=None,
-        adjust_price=False,
         chunksize=50,
-        interval="d",
     ):
 
-        self.symbols = symbols
+        self.symbols = None
 
         # Ladder up the wait time between subsequent requests to improve
         # probability of a successful retry
         self.pause_multiplier = 2.5
         self.chunksize = max(1, chunksize)
 
-        start, end = _sanitize_dates(start or settings.DEFAULT_START_DATE, end)
-        self.start = start
-        self.end = end
+        self.start = None
+        self.end = None
 
-        self.adjust_price = adjust_price
-        self.interval = interval
+        self.adjust_price = False
+        self.interval = "d"
 
         if self.interval not in ["d", "w", "m"]:
             raise ValueError("Invalid interval: valid values are 'd', 'w' and 'm'.")
@@ -127,8 +121,35 @@ class TSEReader:
             ).reset_index(drop=True)
         return self.instrumentList
 
-    def history(self):
+    def history(
+        self,
+        symbols=None,
+        start=None,
+        end=None,
+        retry_count=3,
+        pause=0.1,
+        adjust_price=False,
+        chunksize=50,
+        interval="d",
+    ):
         """read one data from specified URL"""
+        self.symbols = symbols
+
+        # Ladder up the wait time between subsequent requests to improve
+        # probability of a successful retry
+        self.pause_multiplier = 2.5
+        self.chunksize = max(1, chunksize)
+
+        start, end = _sanitize_dates(start or settings.DEFAULT_START_DATE, end)
+        self.start = start
+        self.end = end
+
+        self.adjust_price = adjust_price
+        self.interval = interval
+
+        if self.interval not in ["d", "w", "m"]:
+            raise ValueError("Invalid interval: valid values are 'd', 'w' and 'm'.")
+
         instruments = self.instruments()
         if instruments is None:
             return None
