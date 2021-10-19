@@ -4,7 +4,8 @@ import jdatetime as jt
 from pandas import to_datetime
 import requests
 
-from pandas_datareader.compat import is_number
+from numbers import Number
+import numpy as np
 
 
 class SymbolWarning(UserWarning):
@@ -81,3 +82,44 @@ def _init_session(session):
         if not isinstance(session, requests.Session):
             raise TypeError("session must be a request.Session")
     return session
+
+
+def is_number(obj) -> bool:
+    """
+    Check if the object is a number.
+
+    Returns True when the object is a number, and False if is not.
+
+    Parameters
+    ----------
+    obj : any type
+        The object to check if is a number.
+
+    Returns
+    -------
+    is_number : bool
+        Whether `obj` is a number or not.
+
+    See Also
+    --------
+    api.types.is_integer: Checks a subgroup of numbers.
+
+    Examples
+    --------
+    >>> from pandas.api.types import is_number
+    >>> is_number(1)
+    True
+    >>> is_number(7.15)
+    True
+
+    Booleans are valid because they are int subclass.
+
+    >>> is_number(False)
+    True
+
+    >>> is_number("foo")
+    False
+    >>> is_number("5")
+    False
+    """
+    return isinstance(obj, (Number, np.number))
