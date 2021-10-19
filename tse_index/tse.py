@@ -264,10 +264,54 @@ class reader:
         else:
             return df
 
-    def _adjust_price(self, hist_data, price_list=None):
+    def _adjust_price(self, hist_data, columns=None):
         """
         Return modifed DataFrame with adjusted prices based on
         'Adj Close' and 'Yesterday'  price
+        """
+        """
+        Adjust historical records of stock
+
+        There is a capital increase/profit sharing,
+        if today "Final Close Price" is not equal to next day
+        "Yesterday Final Close Price" by using this ratio,
+        performance adjustment of stocks is achieved
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            DataFrame with historical records.
+        columns: list
+            List of columns to be modifies
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with adjusted historical records.
+
+        Notes
+        -----
+        DataFrame can not be empty or else it makes runtime error
+        Type of DataFrame must be RangeIndex to make proper range of records
+        that need to be modified
+
+        diff: list
+            list of indexs of the day after capital increase/profit sharing
+        ratio_list: List
+            List of ratios to adjust historical data of stock
+        ratio: Float
+            ratio = df.loc[i].adjClose / df.loc[i+1].yesterday
+
+        Description
+        -----------
+        #Note: adjustment does not include Tenth and twentieth days
+        df.index = range(0,101,1)
+        #step is 1
+        step = df.index.step
+        diff = [10,20]
+        ratio_list = [0.5, 0.8]
+        df.loc[0:10-step, [open,...]] * ratio[0]
+        df.loc[10:20-step, [open,...]] * ratio[1]
         """
         if hist_data is None or hist_data.empty:
             return hist_data
@@ -275,8 +319,8 @@ class reader:
             raise TypeError(
                 "Error in adjusting price; index type must be RangeIndex"
             ) from None
-        if price_list is None:
-            price_list = ["Open", "High", "Low", "Close", "AdjClose", "Yesterday"]
+        if columns is None:
+            columns = ["Open", "High", "Low", "Close", "AdjClose", "Yesterday"]
 
         data = hist_data.copy()
         step = data.index.step
@@ -294,8 +338,8 @@ class reader:
             else:
                 start = diff[i - 1]
             end = diff[i] - step
-            data.loc[start:end, price_list] = round(
-                data.loc[start:end, price_list] * ratio_list[i]
+            data.loc[start:end, columns] = round(
+                data.loc[start:end, columns] * ratio_list[i]
             )
 
         return data
