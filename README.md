@@ -113,7 +113,7 @@ import tse_index as tse
 index = tse.reader()
 index.instruments().symbol
 
-        اعتضاد غدیر
+0        اعتضاد غدیر
 1         کاغذ مراغه
 2          (1)کشاورز
 3           (12)نوین
