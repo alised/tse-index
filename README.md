@@ -129,6 +129,8 @@ index.instruments().symbol
 </div>
 
 ## مشارکت در توسعه برنامه
-در صورت تمایل به مشارکت در پروژه [آموزش مشارکت](https://github.com/firstcontributions/first-contributions/blob/master/translations/README.fa.md) را مطالعه فرمایید.
+  اگر مشکلی در برنامه مشاهده می کنید از سربرگ Issues موضوع را با تگ باگ و در صورتی که پیشنهادی دارید با تگ بهبود مطرح نمایید.
+
+  در صورت تمایل به مشارکت در توسعه پروژه [آموزش مشارکت](https://github.com/firstcontributions/first-contributions/blob/master/translations/README.fa.md) را مطالعه فرمایید.
 
 </div>
