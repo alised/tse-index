@@ -5,7 +5,7 @@ import requests
 import bs4
 
 
-class TSEClient():
+class TSEClient:
     def DecompressAndGetInsturmentClosingPrice(insCodesList: str):
         """
         Fetch historical price of stocks and indices
@@ -69,7 +69,6 @@ class TSEClient():
                 data = tag.text
         return data
 
-
     def LastPossibleDeven():
         url = "http://service.tsetmc.com/WebService/TseClient.asmx"
 
@@ -92,7 +91,6 @@ class TSEClient():
             if tag is not None:
                 data = tag.text
         return data
-
 
     def InstrumentAndShare(InsLastDate: str = "0", ShareLastID: int = 0):
         """
@@ -139,7 +137,6 @@ class TSEClient():
             tag = soup.find("InstrumentAndShareResult")
             data = tag.text if tag else ""
         return data
-
 
     def Instrument(InsLastDate: str = "0"):
         """
@@ -189,9 +186,7 @@ class TSEClient():
 
         body = '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><Instrument xmlns="http://tsetmc.com/"><DEven>{}</DEven></Instrument></soap:Body></soap:Envelope>'
 
-        response = requests.post(
-            url, data=body.format(InsLastDate), headers=headers
-        )
+        response = requests.post(url, data=body.format(InsLastDate), headers=headers)
         if response.status_code == 200:
             soup = bs4.BeautifulSoup(response.text, "xml")
             tag = soup.find("InstrumentResult")

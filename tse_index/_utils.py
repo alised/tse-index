@@ -38,7 +38,7 @@ def _sanitize_dates(start, end):
             start = dt.datetime(start, 1, 1)
         elif start <= 16001230:
             # jalali date as int ex: 14001020
-            start = jt.datetime.strptime(str(start), '%Y%m%d').togregorian()
+            start = jt.datetime.strptime(str(start), "%Y%m%d").togregorian()
         else:
             # date as int ex: 20210925
             start = dt.datetime.strptime(str(start), "%Y%m%d")
@@ -52,7 +52,7 @@ def _sanitize_dates(start, end):
             end = dt.datetime(end, 1, 1)
         elif end <= 16001230:
             # jalali date as int ex: 14001020
-            end = jt.datetime.strptime(str(end), '%Y%m%d').togregorian()
+            end = jt.datetime.strptime(str(end), "%Y%m%d").togregorian()
         else:
             # date as int ex: 20210925
             end = dt.datetime.strptime(str(end), "%Y%m%d")

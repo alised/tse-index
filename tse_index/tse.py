@@ -43,11 +43,7 @@ class reader:
     """
 
     def __init__(
-        self,
-        retry_count=3,
-        pause=0.1,
-        session=None,
-        chunksize=50,
+        self, retry_count=3, pause=0.1, session=None, chunksize=50,
     ):
 
         self.symbols = None
@@ -77,14 +73,14 @@ class reader:
             # update instrument history
             lastDate = deven.split(";")
             if len(lastDate) < 2:
-                raise IOError(
-                    "Last possible date request returned no data"
-                )
+                raise IOError("Last possible date request returned no data")
         return True
 
     def search(self, search, market=None):
         if market not in ["index", "normal", None]:
-            raise ValueError("Invalid instrument market: valid values are 'index' and 'normal'.")
+            raise ValueError(
+                "Invalid instrument market: valid values are 'index' and 'normal'."
+            )
         if market == "index":
             market = "ID"
         elif market == "normal":
@@ -93,32 +89,40 @@ class reader:
         if instruments is None:
             return None
         search = re.sub(r"\s{2,}", " ", search.strip()).replace(" ", ".*")
-        find = instruments[instruments.symbol.str.contains(search) & ((market == None) | (instruments.market == market))]
+        find = instruments[
+            instruments.symbol.str.contains(search)
+            & ((market == None) | (instruments.market == market))
+        ]
         return find
 
     def indices(self):
         instruments = self.instruments()
         indices = instruments[lambda i: i.type == "I"]
-        indices = indices.drop_duplicates('symbol').sort_index().reset_index(drop=True)
+        indices = indices.drop_duplicates("symbol").sort_index().reset_index(drop=True)
         return indices
 
     def instruments(self):
-        lastDate = 0 if self.instrumentList is None else max(self.instrumentList.get("date", [0]))
+        lastDate = (
+            0
+            if self.instrumentList is None
+            else max(self.instrumentList.get("date", [0]))
+        )
         today = int(datetime.date.today().strftime("%Y%m%d"))
         if self.instrumentList is None or today > lastDate:
             # update instrument list
             instrumentList = self._replace_arabic(self.client.Instrument(lastDate))
             data = StringIO(instrumentList)
-            instruments = pd.read_csv(data, lineterminator=";", sep=",", names=settings._TSE_INS_FIELD)
+            instruments = pd.read_csv(
+                data, lineterminator=";", sep=",", names=settings._TSE_INS_FIELD
+            )
             # market = ID/NO  Index Market/Normal Market
             # type = I/A  Indice/Normal
-            self.instrumentList = pd.concat(
-                [instruments, self.instrumentList]
-            ).drop_duplicates(
-                subset=['id']
-            ).sort_values(
-                ['symbol', 'date'], ascending=[True, False]
-            ).reset_index(drop=True)
+            self.instrumentList = (
+                pd.concat([instruments, self.instrumentList])
+                .drop_duplicates(subset=["id"])
+                .sort_values(["symbol", "date"], ascending=[True, False])
+                .reset_index(drop=True)
+            )
         return self.instrumentList
 
     def history(
@@ -158,15 +162,15 @@ class reader:
             symbols_list = [self.symbols]
         else:
             symbols_list = self.symbols
-            
+
         today = int(datetime.date.today().strftime("%Y%m%d"))
-        if self.lastPossibleDeven is None or today > max(map(int, self.lastPossibleDeven.split(";"))):
+        if self.lastPossibleDeven is None or today > max(
+            map(int, self.lastPossibleDeven.split(";"))
+        ):
             self.lastPossibleDeven = self.client.LastPossibleDeven()
         lastDate = self.lastPossibleDeven.split(";")
         if len(lastDate) < 2:
-            raise IOError(
-                "Last possible date request returned no data"
-            )
+            raise IOError("Last possible date request returned no data")
         normalLastPossibleDeven = int(lastDate[0])
         indexLastPossibleDeven = int(lastDate[1])
 
@@ -182,32 +186,45 @@ class reader:
                 deven = max(self._history.get(symbol).Date)
             if deven < indexLastPossibleDeven:
                 # update history
-                insCodes += list(ins['id'])
-                insSymbols += list(ins['symbol'])
-                insCodesList += list(ins.apply(lambda x: f"{x.id},{deven},"+("1" if x.market=="ID" else "0"), axis=1))
+                insCodes += list(ins["id"])
+                insSymbols += list(ins["symbol"])
+                insCodesList += list(
+                    ins.apply(
+                        lambda x: f"{x.id},{deven},"
+                        + ("1" if x.market == "ID" else "0"),
+                        axis=1,
+                    )
+                )
 
         chunk = 0
         while chunk < len(insCodesList):
-            resp = self.client.DecompressAndGetInsturmentClosingPrice(';'.join(insCodesList[chunk:chunk+self.chunksize]))
-            historyStr = resp.split('@')
+            resp = self.client.DecompressAndGetInsturmentClosingPrice(
+                ";".join(insCodesList[chunk : chunk + self.chunksize])
+            )
+            historyStr = resp.split("@")
             for i, v in enumerate(historyStr):
                 data = StringIO(v)
-                ohlc = pd.read_csv(data, lineterminator=";", sep=",", names=settings._TSE_FIELD)
-                ohlc = ohlc[ohlc['Count'] != 0].reset_index(drop=True)[settings._TSE_FIELD_ORDER]
+                ohlc = pd.read_csv(
+                    data, lineterminator=";", sep=",", names=settings._TSE_FIELD
+                )
+                ohlc = ohlc[ohlc["Count"] != 0].reset_index(drop=True)[
+                    settings._TSE_FIELD_ORDER
+                ]
                 if insSymbols[chunk + i] in self._history:
                     self._history[insSymbols[chunk + i]] = (
-                        self._history[insSymbols[chunk + i]].append(
-                            ohlc,
-                            ignore_index=True,
-                            sort=False
-                        ).sort_values('Date').reset_index(drop=True)
+                        self._history[insSymbols[chunk + i]]
+                        .append(ohlc, ignore_index=True, sort=False)
+                        .sort_values("Date")
+                        .reset_index(drop=True)
                     )
                 else:
                     self._history[insSymbols[chunk + i]] = ohlc
             chunk += self.chunksize
 
         if type(self.symbols) is str:
-            return self._adjust({self.symbols: self._history.get(self.symbols, None)})[self.symbols]
+            return self._adjust({self.symbols: self._history.get(self.symbols, None)})[
+                self.symbols
+            ]
         else:
             return self._adjust({s: self._history.get(s, None) for s in symbols_list})
 
@@ -219,7 +236,7 @@ class reader:
 
         for i in df:
             if df[i] is None:
-               continue
+                continue
             ins = instruments[instruments.symbol == i]
             df[i] = df[i].copy()
             if self.adjust_price and not ins.empty and ins.iloc[0].market == "NO":
@@ -228,7 +245,7 @@ class reader:
             if "Date" in df[i]:
                 df[i]["Date"] = pd.to_datetime(df[i]["Date"], format="%Y%m%d")
                 df[i] = df[i].set_index("Date")
-                df[i] = df[i][self.start: self.end]
+                df[i] = df[i][self.start : self.end]
                 if self.interval == "w":
                     ohlc = df[i]["Close"].resample("w-sat").ohlc()
                     ohlc["Volumne"] = df[i]["Volume"].resample("w-sat").sum()
@@ -280,7 +297,7 @@ class reader:
             data.loc[start:end, price_list] = round(
                 data.loc[start:end, price_list] * ratio_list[i]
             )
-    
+
         return data
 
     def _replace_arabic(self, string: str):
