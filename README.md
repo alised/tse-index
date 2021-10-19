@@ -11,7 +11,8 @@
 - دریافت لیست شاخص‌ها
 - جستجو در نام نمادها
 - تجمیع خودکار دیتای قدیمی نمادها
-
+- تعدیل عملکردی سابقه قیمتی سهام
+  
 ## نصب
 <div dir="ltr">
 
@@ -38,7 +39,7 @@ python -m pip install git+https://github.com/alised/tse-index.git
 ```python
 import tse_index as tse
 index = tse.reader()
-index.history('شاخص کل6', start=1390, end=14000730, adjust_price=False, interval='d')
+index.history("شاخص کل6", start=1390, end=14000730, adjust_price=False, interval="d")
 
                  Open       High  ...   AdjClose     Yesterday
 Date                              ...                         
@@ -72,7 +73,7 @@ Date                              ...
 ```python
 import tse_index as tse
 index = tse.reader()
-index.search('دارو', 'index').symbol
+index.search("دارو", "index").symbol
 
 32      43-مواد دارویی6
 1039      دارو فرابورس6
