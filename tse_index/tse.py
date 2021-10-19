@@ -207,18 +207,22 @@ class reader:
             chunk += self.chunksize
 
         if type(self.symbols) is str:
-            return self._adjust(self._history.get(self.symbols, None))
+            return self._adjust({self.symbols: self._history.get(self.symbols, None)})[self.symbols]
         else:
             return self._adjust({s: self._history.get(s, None) for s in symbols_list})
 
     def _adjust(self, idf):
+        instruments = self.instruments()
         df = idf
         if type(idf) is pd.DataFrame:
             df = {0: idf}
 
         for i in df:
+            if df[i] is None:
+               continue
+            ins = instruments[instruments.symbol == i]
             df[i] = df[i].copy()
-            if self.adjust_price:
+            if self.adjust_price and not ins.empty and ins.iloc[0].market == "NO":
                 df[i] = self._adjust_price(df[i])
 
             if "Date" in df[i]:
