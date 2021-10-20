@@ -39,7 +39,7 @@ class TSEClient:
         """
         if not insCodesList:
             return ""
-
+        print(zlib.MAX_WBITS)
         compressor = zlib.compressobj(wbits=(16 + zlib.MAX_WBITS))
         compressed = base64.b64encode(
             struct.pack("L", len(insCodesList))
