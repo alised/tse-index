@@ -62,7 +62,10 @@ class TSEClient:
             url, data=body.format(compressed.decode("ascii")), headers=headers
         )
         data = ""
+
         print(response.status_code)
+        print(body.format(compressed.decode("ascii")))
+        print(insCodesList)
         if response.status_code == 200:
             soup = bs4.BeautifulSoup(response.text, "xml")
             tag = soup.find("DecompressAndGetInsturmentClosingPriceResult")
