@@ -182,7 +182,11 @@ class reader:
             ins = instruments[instruments.symbol == symbol]
             if len(ins) == 0:
                 continue
-            if symbol in self._history:
+            if (
+                symbol in self._history
+                and self._history.get(symbol) is not None
+                and len(self._history.get(symbol)) > 0
+            ):
                 deven = max(self._history.get(symbol).Date)
             if deven < indexLastPossibleDeven:
                 # update history
