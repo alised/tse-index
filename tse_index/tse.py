@@ -206,7 +206,7 @@ class reader:
                 ";".join(insCodesList[chunk : chunk + self.chunksize])
             )
             print(insCodesList)
-            print(resp)
+            # print(resp)
             historyStr = resp.split("@")
             for i, v in enumerate(historyStr):
                 data = StringIO(v)

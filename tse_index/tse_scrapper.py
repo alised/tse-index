@@ -59,7 +59,7 @@ class TSEClient:
         body = '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><DecompressAndGetInsturmentClosingPrice xmlns="http://tsetmc.com/"><insCodes>{}</insCodes></DecompressAndGetInsturmentClosingPrice></soap:Body></soap:Envelope>'
 
         response = requests.post(
-            url, data=body.format(compressed.decode("ascii")), headers=headers
+            url, data=body.format("FQAAAB+LCAAAAAAAAAozNjKwNLcwsjC3tDQ0trA0Ndcx0DEEAK5IArUVAAAA"), headers=headers
         )
         data = ""
 
