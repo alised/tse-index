@@ -1,3 +1,6 @@
+import requests
+import bs4
+import lxml
 import re
 import pandas as pd
 from io import StringIO
@@ -66,6 +69,7 @@ class reader:
         self.lastPossibleDeven = None
         self.instrumentList = None
         self._history = {}
+        self._groups = {}
 
     def update(self):
         deven = self.client.LastPossibleDeven()
@@ -347,6 +351,34 @@ class reader:
             )
 
         return data
+
+    def group_name(self, symbol):
+        instruments = self.instruments()
+        ins = instruments[instruments.symbol == symbol]
+        group_name = None
+        if len(ins) > 0:
+            group_code = ins.iloc[0].get("group")
+            group_name = self.groups().get(group_code, None)
+        return group_name
+
+    def groups(self):
+        if not self._groups:
+            self._groups = self._fetch_groups()
+        return self._groups
+
+    def _fetch_groups(self):
+        resp = requests.get(settings._TSE_URL_GROUP_LIST)
+        groups = {}
+        if resp.status_code == 200:
+            group_list = self._replace_arabic(resp.text)
+            bs = bs4.BeautifulSoup(group_list, 'lxml')
+            rows = bs.findAll('tr')
+            for r in rows:
+                td = r.findAll('td')
+                if r.get('id') is None:
+                    continue
+                groups[td[0].text] = td[1].text
+        return groups
 
     def _replace_arabic(self, string: str):
         return string.replace("ك", "ک").replace("ي", "ی")
