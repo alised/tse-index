@@ -42,7 +42,7 @@ class TSEClient:
 
         compressor = zlib.compressobj(wbits=(16 + zlib.MAX_WBITS))
         compressed = base64.b64encode(
-            struct.pack("L", len(insCodesList))
+            struct.pack("<L", len(insCodesList))
             + compressor.compress(bytes(insCodesList, "ascii"))
             + compressor.flush()
         )
