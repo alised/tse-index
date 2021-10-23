@@ -105,7 +105,7 @@ class reader:
         indices = indices.drop_duplicates("symbol").sort_index().reset_index(drop=True)
         return indices
 
-    def instruments(self):
+    def instruments(self, group=None):
         lastDate = (
             0
             if self.instrumentList is None
@@ -127,7 +127,15 @@ class reader:
                 .sort_values(["symbol", "date"], ascending=[True, False])
                 .reset_index(drop=True)
             )
-        return self.instrumentList
+        if group is None or self.instrumentList is None:
+            ins = self.instrumentList
+        else:
+            groups = self.groups()
+            group_code = None
+            if group in groups.values():
+                group_code = list(groups.keys())[list(groups.values()).index(group)]
+            ins = self.instrumentList[self.instrumentList.group == group_code]
+        return ins
 
     def history(
         self,
