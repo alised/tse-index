@@ -1,5 +1,6 @@
 DATE_FORMAT = "%Y%m%d"
 DEFAULT_START_DATE = 20010321
+DATA_BASE_PATH = "tickers_data"
 
 _TSE_URL_GROUP_LIST = "http://www.tsetmc.com/Loader.aspx?ParTree=111C1213"
 

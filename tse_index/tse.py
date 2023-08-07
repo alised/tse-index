@@ -5,6 +5,7 @@ import re
 import pandas as pd
 from io import StringIO
 import datetime
+from pathlib import Path
 from tse_index import settings
 from tse_index.tse_scrapper import TSEClient
 from tse_index._utils import (
@@ -136,6 +137,19 @@ class reader:
                 group_code = list(groups.keys())[list(groups.values()).index(group)]
             ins = self.instrumentList[self.instrumentList.group == group_code]
         return ins
+
+    def to_csv(
+        self,
+        base_path: str = settings.DATA_BASE_PATH,
+    ):
+        """store history of instruments into disk"""
+        if self._history is not None and len(self._history) > 0:
+            Path(base_path).mkdir(parents=True, exist_ok=True)
+            for symbol in self._history:
+                self._history[symbol].to_csv(
+                    f"{base_path}/{symbol}.csv",
+                    index=False
+                )
 
     def history(
         self,
