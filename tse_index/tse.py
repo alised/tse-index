@@ -74,7 +74,7 @@ class reader:
     def update(self):
         deven = self.client.LastPossibleDeven()
         if self.lastPossibleDeven != deven:
-            # update instrument history
+            # TODO update instrument history
             lastDate = deven.split(";")
             if len(lastDate) < 2:
                 raise IOError("Last possible date request returned no data")
@@ -95,7 +95,7 @@ class reader:
         search = re.sub(r"\s{2,}", " ", search.strip()).replace(" ", ".*")
         find = instruments[
             instruments.symbol.str.contains(search)
-            & ((market == None) | (instruments.market == market))
+            & ((market is None) | (instruments.market == market))
         ]
         return find
 
@@ -200,7 +200,11 @@ class reader:
                 and len(self._history.get(symbol)) > 0
             ):
                 deven = max(self._history.get(symbol).Date)
-            if deven < indexLastPossibleDeven:
+
+            if (((ins.market == "NO").any() and
+               deven < normalLastPossibleDeven) or
+               ((ins.market == "ID").any() and
+               deven < indexLastPossibleDeven)):
                 # update history
                 insCodes += list(ins["id"])
                 insSymbols += list(ins["symbol"])
@@ -228,8 +232,10 @@ class reader:
                 ]
                 if insSymbols[chunk + i] in self._history:
                     self._history[insSymbols[chunk + i]] = (
-                        self._history[insSymbols[chunk + i]]
-                        .append(ohlc, ignore_index=True, sort=False)
+                        pd.concat(
+                            [self._history[insSymbols[chunk + i]], ohlc],
+                            ignore_index=True, sort=False
+                        )
                         .sort_values("Date")
                         .reset_index(drop=True)
                     )
