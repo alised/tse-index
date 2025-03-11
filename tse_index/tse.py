@@ -1,10 +1,10 @@
 import requests
-import bs4
-import lxml
+import ast
 import re
 import pandas as pd
 from io import StringIO
 import datetime
+from pathlib import Path
 from tse_index import settings
 from tse_index.tse_scrapper import TSEClient
 from tse_index._utils import (
@@ -74,7 +74,7 @@ class reader:
     def update(self):
         deven = self.client.LastPossibleDeven()
         if self.lastPossibleDeven != deven:
-            # update instrument history
+            # TODO update instrument history
             lastDate = deven.split(";")
             if len(lastDate) < 2:
                 raise IOError("Last possible date request returned no data")
@@ -95,7 +95,7 @@ class reader:
         search = re.sub(r"\s{2,}", " ", search.strip()).replace(" ", ".*")
         find = instruments[
             instruments.symbol.str.contains(search)
-            & ((market == None) | (instruments.market == market))
+            & ((market is None) | (instruments.market == market))
         ]
         return find
 
@@ -117,8 +117,12 @@ class reader:
             instrumentList = self._replace_arabic(self.client.Instrument(lastDate))
             data = StringIO(instrumentList)
             instruments = pd.read_csv(
-                data, lineterminator=";", sep=",", names=settings._TSE_INS_FIELD
+                data,
+                lineterminator=";",
+                sep=",",
+                names=settings._TSE_INS_FIELD,
             )
+            instruments['group'] = instruments['group'].str.strip()
             # market = ID/NO  Index Market/Normal Market
             # type = I/A  Indice/Normal
             self.instrumentList = (
@@ -136,6 +140,19 @@ class reader:
                 group_code = list(groups.keys())[list(groups.values()).index(group)]
             ins = self.instrumentList[self.instrumentList.group == group_code]
         return ins
+
+    def to_csv(
+        self,
+        base_path: str = settings.DATA_BASE_PATH,
+    ):
+        """store history of instruments into disk"""
+        if self._history is not None and len(self._history) > 0:
+            Path(base_path).mkdir(parents=True, exist_ok=True)
+            for symbol in self._history:
+                self._history[symbol].to_csv(
+                    f"{base_path}/{symbol}.csv",
+                    index=False
+                )
 
     def history(
         self,
@@ -200,7 +217,11 @@ class reader:
                 and len(self._history.get(symbol)) > 0
             ):
                 deven = max(self._history.get(symbol).Date)
-            if deven < indexLastPossibleDeven:
+
+            if (((ins.market == "NO").any() and
+               deven < normalLastPossibleDeven) or
+               ((ins.market == "ID").any() and
+               deven < indexLastPossibleDeven)):
                 # update history
                 insCodes += list(ins["id"])
                 insSymbols += list(ins["symbol"])
@@ -228,8 +249,10 @@ class reader:
                 ]
                 if insSymbols[chunk + i] in self._history:
                     self._history[insSymbols[chunk + i]] = (
-                        self._history[insSymbols[chunk + i]]
-                        .append(ohlc, ignore_index=True, sort=False)
+                        pd.concat(
+                            [self._history[insSymbols[chunk + i]], ohlc],
+                            ignore_index=True, sort=False
+                        )
                         .sort_values("Date")
                         .reset_index(drop=True)
                     )
@@ -379,13 +402,20 @@ class reader:
         groups = {}
         if resp.status_code == 200:
             group_list = self._replace_arabic(resp.text)
-            bs = bs4.BeautifulSoup(group_list, 'lxml')
-            rows = bs.findAll('tr')
-            for r in rows:
-                td = r.findAll('td')
-                if r.get('id') is None:
-                    continue
-                groups[td[0].text] = td[1].text
+            match = re.search(r'var Sectors=\[\[(.*?)\]\]', group_list, re.DOTALL)
+            if match:
+                sectors_data = match.group(1)
+                # Safely parse the string into a list using ast.literal_eval
+                try:
+                    sectors_list = ast.literal_eval(f'[[{sectors_data}]]')
+                except (ValueError, SyntaxError):
+                    raise ValueError(
+                        "Error parsing Groups data."
+                    )
+                    sectors_list = []
+                # Step 3: Convert the list of lists into a dictionary
+                groups = {sector[0]: sector[1] for sector in sectors_list}
+
         return groups
 
     def _replace_arabic(self, string: str):
