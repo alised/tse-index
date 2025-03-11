@@ -1,6 +1,5 @@
 import requests
-import bs4
-import lxml
+import ast
 import re
 import pandas as pd
 from io import StringIO
@@ -118,8 +117,12 @@ class reader:
             instrumentList = self._replace_arabic(self.client.Instrument(lastDate))
             data = StringIO(instrumentList)
             instruments = pd.read_csv(
-                data, lineterminator=";", sep=",", names=settings._TSE_INS_FIELD
+                data,
+                lineterminator=";",
+                sep=",",
+                names=settings._TSE_INS_FIELD,
             )
+            instruments['group'] = instruments['group'].str.strip()
             # market = ID/NO  Index Market/Normal Market
             # type = I/A  Indice/Normal
             self.instrumentList = (
@@ -399,13 +402,20 @@ class reader:
         groups = {}
         if resp.status_code == 200:
             group_list = self._replace_arabic(resp.text)
-            bs = bs4.BeautifulSoup(group_list, 'lxml')
-            rows = bs.findAll('tr')
-            for r in rows:
-                td = r.findAll('td')
-                if r.get('id') is None:
-                    continue
-                groups[td[0].text] = td[1].text
+            match = re.search(r'var Sectors=\[\[(.*?)\]\]', group_list, re.DOTALL)
+            if match:
+                sectors_data = match.group(1)
+                # Safely parse the string into a list using ast.literal_eval
+                try:
+                    sectors_list = ast.literal_eval(f'[[{sectors_data}]]')
+                except (ValueError, SyntaxError):
+                    raise ValueError(
+                        "Error parsing Groups data."
+                    )
+                    sectors_list = []
+                # Step 3: Convert the list of lists into a dictionary
+                groups = {sector[0]: sector[1] for sector in sectors_list}
+
         return groups
 
     def _replace_arabic(self, string: str):
